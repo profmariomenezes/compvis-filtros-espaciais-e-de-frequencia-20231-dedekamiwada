@@ -1,39 +1,45 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import fftpack
 from scipy import ndimage
-from skimage import io
 
-# Carrega a imagem
-img = io.imread('footBall_orig.jpg', as_gray=True)
+# Carregando a imagem
+img = plt.imread('footBall_orig.jpg')
 
-# Calcula a Transformada Rápida de Fourier (FFT)
-fft_img = np.fft.fft2(img)
+# Convertendo para escala de cinza
+img_gray = np.mean(img, axis=-1)
 
-# Calcula a magnitude do espectro
+# Realizando padding para uma imagem com dimensões potência de 2
+n = 2**np.ceil(np.log2(img_gray.shape)).astype(int)
+img_padded = np.zeros((n[0], n[1]))
+img_padded[:img_gray.shape[0], :img_gray.shape[1]] = img_gray
+
+# Calculando a Transformada de Fourier 2D
+fft_img = fftpack.fft2(img_padded)
+
+# Calculando a magnitude do espectro
 magnitude_spectrum = np.abs(fft_img)
 
-# Aplica o Filtro Gaussiano passa-baixa
-filtered_img = ndimage.gaussian_filter(img, sigma=3)
+# Aplicando o filtro gaussiano passa-baixa
+sigma = 30
+filt = ndimage.gaussian_filter(img_padded, sigma=sigma)
 
-# Calcula a Transformada Rápida de Fourier (FFT) da imagem filtrada
-fft_filtered_img = np.fft.fft2(filtered_img)
+# Calculando a Transformada de Fourier 2D do filtro
+fft_filt = fftpack.fft2(filt)
 
-# Calcula a magnitude do espectro da imagem filtrada
-magnitude_spectrum_filtered = np.abs(fft_filtered_img)
+# Calculando a magnitude do espectro filtrado
+magnitude_spectrum_filt = np.abs(fft_filt)
 
-# Mostra as imagens e os espectros
-fig, axs = plt.subplots(2, 2, figsize=(10, 10))
-
-axs[0, 0].imshow(img, cmap='gray')
+# Plotando as imagens e espectros
+fig, axs = plt.subplots(2, 2, figsize=(8, 8))
+axs[0, 0].imshow(img_gray, cmap='gray')
 axs[0, 0].set_title('Imagem Original')
-
 axs[0, 1].imshow(magnitude_spectrum, cmap='gray')
 axs[0, 1].set_title('Espectro de Fourier')
-
-axs[1, 0].imshow(filtered_img, cmap='gray')
+axs[1, 0].imshow(filt, cmap='gray')
 axs[1, 0].set_title('Imagem Filtrada')
-
-axs[1, 1].imshow(magnitude_spectrum_filtered, cmap='gray')
+axs[1, 1].imshow(magnitude_spectrum_filt, cmap='gray')
 axs[1, 1].set_title('Espectro de Fourier Filtrado')
-
+for ax in axs.flat:
+    ax.axis('off')
 plt.show()
